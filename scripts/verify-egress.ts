@@ -48,7 +48,7 @@ try {
     if (!(error instanceof EgressRpcError) || error.code !== 5) throw error;
     save('policy-before.json', { notFound: true });
   }
-  if (existing && JSON.stringify(existing.cidrs) !== JSON.stringify(egress.cidrs)) throw new Error('Existing policy conflicts; never replace');
+  if (existing && (existing.cidrs.length !== egress.cidrs.length || egress.cidrs.some((cidr) => !existing.cidrs.includes(cidr)))) throw new Error('Existing policy conflicts; never replace');
   if (!existing) {
     stage = 'policy-create-requested'; save('policy-create-intent.json', { actor, cidrs: egress.cidrs });
     // One attempt only. An uncertain reply leaves intent; operator may GET, never blindly retry.
@@ -56,7 +56,7 @@ try {
   }
   stage = 'policy-get-after';
   const verified = await policy.getPolicy(actor);
-  if (JSON.stringify(verified.cidrs) !== JSON.stringify(egress.cidrs)) throw new Error('Policy readback mismatch');
+  if (verified.cidrs.length !== egress.cidrs.length || egress.cidrs.some((cidr) => !verified.cidrs.includes(cidr))) throw new Error('Policy readback mismatch');
   save('policy-verified.json', verified);
   guest = new AxTransport({ controlAddress: routerAddress, routerAddress });
   const program = `const https = require('node:https');

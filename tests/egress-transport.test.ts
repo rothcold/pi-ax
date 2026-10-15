@@ -83,6 +83,27 @@ test('EgressPolicyClient sends authenticated native Create/Get requests over CA-
   } finally { f.close(); }
 });
 
+test('EgressPolicyClient accepts reordered CIDR set without mutating config or response arrays', async () => {
+  const returnedCidrs = [...cidrs].reverse();
+  const response = { ...policy, rules: [{ cidrs: { cidrs: returnedCidrs } }] };
+  let calls = 0;
+  const f = await fixture({ CreateActorEgressPolicy(call, cb) {
+    calls++;
+    assert.deepEqual(call.metadata.get('authorization'), [`Bearer ${token}`]);
+    assert.deepEqual(call.request.egressPolicy?.rules?.[0].cidrs?.cidrs, cidrs);
+    cb(null, response);
+  } });
+  const originalConfig = [...f.config.cidrs];
+  const originalResponse = [...returnedCidrs];
+  try {
+    const created = await f.client.createPolicy(actor);
+    assert.deepEqual(created.cidrs, originalResponse);
+    assert.deepEqual(f.config.cidrs, originalConfig);
+    assert.deepEqual(returnedCidrs, originalResponse);
+    assert.equal(calls, 1);
+  } finally { f.close(); }
+});
+
 function safeFailure(code: grpc.status) {
   return (error: unknown) => {
     assert.ok(error instanceof EgressRpcError);
@@ -205,7 +226,10 @@ test('policy response validation rejects wrong namespace/name, missing identity,
     { ...policy, metadata: { ...policy.metadata, version: '0' } },
     { ...policy, rules: [] }, { ...policy, rules: [{ all: {} }] },
     { ...policy, rules: [{ hostnames: { patterns: ['api.example.test'] } }] },
-    { ...policy, rules: [{ cidrs: { cidrs: ['0.0.0.0/0'] } }] },
+    ...[[], [cidrs[0], cidrs[0]], [...cidrs, cidrs[0]], ['192.0.2.97/032', cidrs[1]],
+      [cidrs[0], '2001:DB8::1/128'], ['0.0.0.0/0'],
+      Array.from({ length: 257 }, (_, i) => `2001:db8::${(i + 1).toString(16)}/128`)]
+      .map((invalidCidrs) => ({ ...policy, rules: [{ cidrs: { cidrs: invalidCidrs } }] })),
     { ...policy, rules: [{ cidrs: { cidrs }, all: {} }] },
     { ...policy, rules: [{ cidrs: { cidrs } }, { cidrs: { cidrs } }] },
   ];
@@ -219,9 +243,11 @@ test('policy response validation rejects wrong namespace/name, missing identity,
       await assert.rejects(f.client.createPolicy(actor), safeFailure(grpc.status.DATA_LOSS));
       await assert.rejects(f.client.getPolicy(actor), safeFailure(grpc.status.DATA_LOSS));
     }
-    response = { ...policy, rules: [{ cidrs: { cidrs: ['192.0.2.98/32'] } }] };
-    await assert.rejects(f.client.createPolicy(actor), safeFailure(grpc.status.DATA_LOSS));
-    assert.deepEqual((await f.client.getPolicy(actor)).cidrs, ['192.0.2.98/32'], 'Get exposes narrow existing rules for conflict inspection, not automatic replacement');
+    for (const mismatchedCidrs of [[cidrs[0]], [...cidrs, '192.0.2.98/32'], ['192.0.2.98/32', cidrs[1]]]) {
+      response = { ...policy, rules: [{ cidrs: { cidrs: mismatchedCidrs } }] };
+      await assert.rejects(f.client.createPolicy(actor), safeFailure(grpc.status.DATA_LOSS));
+      assert.deepEqual((await f.client.getPolicy(actor)).cidrs, mismatchedCidrs, 'Get exposes narrow existing rules for conflict inspection, not automatic replacement');
+    }
   } finally { f.close(); }
 });
 

@@ -348,14 +348,38 @@ test('missing, invalid or unreadable egress fails before snapshot, reservation a
   await assert.rejects(stat(store.root), { code: 'ENOENT' });
 });
 
-for (const failure of ['permission', 'lost-reply', 'conflict', 'wrong-actor', 'wrong-cidrs'] as const) {
+test('reordered egress CIDR set proceeds through policy, activation, readiness, upload and start without mutation', async (t) => {
+  const { options, manager, store, cwd, fake, policy } = await setup(t);
+  const configuredCidrs = ['2001:db8::2/128', '192.0.2.97/32', '2001:db8::1/128'];
+  options.config().egress.cidrs = [...configuredCidrs];
+  const returnedCidrs = [...configuredCidrs].reverse();
+  const originalResponse = [...returnedCidrs];
+  const original = policy.createPolicy.bind(policy);
+  policy.createPolicy = async (actor) => ({ ...await original(actor), cidrs: returnedCidrs });
+  fake.ready = async () => { fake.calls.push('ready'); return true; };
+  const { taskId } = await manager.spawn('reordered policy', cwd);
+  const record = await launched(store, taskId);
+  assert.equal(record.view.stage, 'started');
+  assert.equal(record.view.state, 'running');
+  assert.deepEqual(fake.calls, ['create', 'policy', 'activate', 'ready', `write:${workerPaths().snapshot}`, `write:${workerPaths().request}`, 'start']);
+  assert.deepEqual(options.config().egress.cidrs, configuredCidrs);
+  assert.deepEqual(record.config.egress?.cidrs, configuredCidrs);
+  assert.deepEqual(returnedCidrs, originalResponse);
+});
+
+for (const failure of ['permission', 'lost-reply', 'conflict', 'wrong-actor', 'wrong-cidrs', 'missing-cidr', 'extra-cidr', 'duplicate-cidr', 'noncanonical-cidr'] as const) {
   test(`egress ${failure} retains unknown intent without activation, upload, start or replay`, async (t) => {
     const { options, manager, store, cwd, fake, policy } = await setup(t);
+    options.config().egress.cidrs = ['192.0.2.97/32', '2001:db8::1/128'];
     const original = policy.createPolicy.bind(policy);
     policy.createPolicy = async (actor) => {
       const response = await original(actor);
       if (failure === 'wrong-actor') return { ...response, actor: { ...actor, name: 'wrong' } };
-      if (failure === 'wrong-cidrs') return { ...response, cidrs: ['192.0.2.98/32'] };
+      if (failure === 'wrong-cidrs') return { ...response, cidrs: ['192.0.2.98/32', response.cidrs[1]] };
+      if (failure === 'missing-cidr') return { ...response, cidrs: response.cidrs.slice(0, 1) };
+      if (failure === 'extra-cidr') return { ...response, cidrs: [...response.cidrs, '192.0.2.98/32'] };
+      if (failure === 'duplicate-cidr') return { ...response, cidrs: [response.cidrs[0], response.cidrs[0]] };
+      if (failure === 'noncanonical-cidr') return { ...response, cidrs: [response.cidrs[0], '2001:DB8::1/128'] };
       throw new EgressRpcError('CreateActorEgressPolicy', failure === 'permission' ? 7 : failure === 'conflict' ? 6 : 14);
     };
     const { taskId } = await manager.spawn('blocked', cwd);

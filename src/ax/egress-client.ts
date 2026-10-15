@@ -117,7 +117,7 @@ function validatePolicy(value: EgressPolicy__Output, actor: TaskRef, expectedCid
     value.rules.length !== 1 || rule.hostnames != null || rule.all != null ||
     !cidrs || cidrs.length < 1 || cidrs.length > 256 || new Set(cidrs).size !== cidrs.length ||
     !cidrs.every(isCanonicalHostCidr) ||
-    (expectedCidrs && (cidrs.length !== expectedCidrs.length || cidrs.some((cidr, i) => cidr !== expectedCidrs[i])))) {
+    (expectedCidrs && (cidrs.length !== expectedCidrs.length || expectedCidrs.some((cidr) => !cidrs.includes(cidr))))) {
     throw new Error('Invalid policy response');
   }
   return { actor: { ...actor }, name: 'default', uid: metadata.uid, version: metadata.version, cidrs: [...cidrs] };

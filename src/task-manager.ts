@@ -155,8 +155,10 @@ export class TaskManager {
       this.clients.add(policyClient);
       try {
         const policy = await policyClient.createPolicy(ref, this.rpc());
+        // CIDRRule is a set: equal length plus every unique configured member also excludes response duplicates.
         if (policy.actor.atespace !== ref.atespace || policy.actor.name !== ref.name || policy.name !== 'default' ||
-            !policy.uid || !policy.version || JSON.stringify(policy.cidrs) !== JSON.stringify(egress.cidrs)) {
+            !policy.uid || !policy.version || policy.cidrs.length !== egress.cidrs.length ||
+            egress.cidrs.some((cidr) => !policy.cidrs.includes(cidr))) {
           throw new Error('Egress policy binding mismatch');
         }
         await this.stage(record, 'egress_policy_verified');
