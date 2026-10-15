@@ -1,0 +1,16 @@
+**
+!package.json
+!npm-shrinkwrap.json
+!tsconfig.json
+!src/
+!src/credentials.ts
+!src/workspace.ts
+!src/worker-protocol.ts
+!worker/
+!worker/run.ts
+!worker/supervise.c
+!worker/tsconfig.json
+!worker/package.json
+!worker/PROVENANCE.md
+!worker/Dockerfile
+!LICENSE

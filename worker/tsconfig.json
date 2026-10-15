@@ -1,0 +1,5 @@
+{
+  "extends": "../tsconfig.json",
+  "compilerOptions": { "noEmit": false, "outDir": "../dist", "rootDir": ".." },
+  "include": ["run.ts", "../src/workspace.ts", "../src/worker-protocol.ts", "../src/credentials.ts"]
+}
