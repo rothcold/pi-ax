@@ -1,7 +1,10 @@
 {
-  "name": "pi-ax",
+  "name": "@rothcold/pi-ax",
   "version": "0.1.0",
   "license": "MIT",
+  "publishConfig": {
+    "access": "public"
+  },
   "description": "Pi extension for one-shot workers in Google AX sandboxes with verified result export and explicit cleanup.",
   "repository": {
     "type": "git",

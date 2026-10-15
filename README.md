@@ -12,15 +12,15 @@ Installing this extension **does not provision AX or provide a hosted sandbox**.
 
 ## Install the extension
 
-**Release preparation:** `0.1.0` has not been published by this preparation. Once it is available on npm, the consumer commands are:
+**Release preparation:** the public npm package is `@rothcold/pi-ax`; `@rothcold/pi-ax@0.1.0` has not been published by this preparation. Once it is available on npm, the consumer commands are:
 
 ```sh
-pi install npm:pi-ax@0.1.0
+pi install npm:@rothcold/pi-ax@0.1.0
 # Later, remove the extension registration/package (not retained AX tasks):
-pi remove npm:pi-ax@0.1.0
+pi remove npm:@rothcold/pi-ax@0.1.0
 ```
 
-Pi installs npm dependencies and records personal packages in its agent directory. For a project-only package registration, use `pi install --local npm:pi-ax@0.1.0` (and `pi remove --local npm:pi-ax@0.1.0`); review/trust that project's `.pi/settings.json`. This does **not** add a project `.pi/ax-config.json` override. Package code runs on your host: review it before installing. See Pi's [official package instructions](https://github.com/earendil-works/pi/blob/main/packages/coding-agent/docs/packages.md).
+Pi installs npm dependencies and records personal packages in its agent directory. For a project-only package registration, use `pi install --local npm:@rothcold/pi-ax@0.1.0` (and `pi remove --local npm:@rothcold/pi-ax@0.1.0`); review/trust that project's `.pi/settings.json`. This does **not** add a project `.pi/ax-config.json` override. Package code runs on your host: review it before installing. See Pi's [official package instructions](https://github.com/earendil-works/pi/blob/main/packages/coding-agent/docs/packages.md).
 
 Before publication, use a [developer checkout](#developer-checkout-and-local-ax) instead. The npm tarball ships the example, source, protobufs, worker recipe and exact root tooling shrinkwrap, never local caches/auth. Pi's npm manager suppresses host-peer auto-installation; local paths are not copied or dependency-installed by Pi.
 
@@ -32,11 +32,11 @@ Copy the shipped [ax-config.example.json](ax-config.example.json) into that dire
 
 ```sh
 mkdir -p ~/.pi/agent
-cp -n ~/.pi/agent/npm/node_modules/pi-ax/ax-config.example.json ~/.pi/agent/ax-config.json
+cp -n ~/.pi/agent/npm/node_modules/@rothcold/pi-ax/ax-config.example.json ~/.pi/agent/ax-config.json
 # Edit ax-config.json and merge your reviewed native egress fragment before spawning.
 ```
 
-If you set `PI_CODING_AGENT_DIR`, use Pi's expanded agent directory for both paths instead. For a project-only install the example is at `.pi/npm/node_modules/pi-ax/ax-config.example.json` in that project; the destination remains the agent directory. For a checkout, copy the example from its root. `pi list` shows configured packages.
+If you set `PI_CODING_AGENT_DIR`, use Pi's expanded agent directory for both paths instead. For a project-only install the example is at `.pi/npm/node_modules/@rothcold/pi-ax/ax-config.example.json` in that project; the destination remains the agent directory. For a checkout, copy the example from its root. `pi list` shows configured packages.
 
 For the documented local environment, the example's addresses and atespace match the loopback port-forwards. Set `workerImage` to the literal digest reference printed by `cat .cache/pi-ax/worker-image`. JSON does not expand shell variables or commands. Set `workerProvider` and `workerModel` to your explicit supported choices, and `credentialEnv` to an array of environment credential names, for example `["ANTHROPIC_API_KEY"]`. Supply their values separately through your environment/secret manager. Never put credential values in JSON, source, argv, prompts, Task metadata or Pi login copies. Use `[]` for no credentials.
 
@@ -96,7 +96,7 @@ Worker Pi is intentionally unlocked: `npm run build:image` freshly resolves npm 
 
 ## Verification scope
 
-One real `minimax/MiniMax-M3` Pi-on-AX SQLite CRUD run passed on 2026-10-15, including source/database export, termination proof and four-resource cleanup, **only for the image recorded in [validation evidence](docs/v1-validation.md)**. Earlier activation, snapshot and model failures and untested recovery cases remain recorded there. Root Pi 0.99.2 tests are separate host evidence. Release preparation also installed the packed tarball with npm into fresh isolated dependency trees and loaded all five tools plus configuration-schema probes using actual Pi **0.99.2 and 1.2.0** (npm latest at that check), without a model/session. This exercised local tarball npm installation, not installation of an already-published `npm:pi-ax` release. These checks do not accept a newer worker image or promise future host compatibility. Unit/integration tests, local Git/subprocess checks and image builds are not model/AX E2E.
+One real `minimax/MiniMax-M3` Pi-on-AX SQLite CRUD run passed on 2026-10-15, including source/database export, termination proof and four-resource cleanup, **only for the image recorded in [validation evidence](docs/v1-validation.md)**. Earlier activation, snapshot and model failures and untested recovery cases remain recorded there. Root Pi 0.99.2 tests are separate host evidence. Before the npm scope rename, release preparation also installed the then-unscoped packed tarball with npm into fresh isolated dependency trees and loaded all five tools plus configuration-schema probes using actual Pi **0.99.2 and 1.2.0** (npm latest at that check), without a model/session. This exercised local tarball npm installation, not an npm-registry release. After the rename, `@rothcold/pi-ax@0.1.0` separately passed a fresh isolated local-tarball install and the same actual loader/schema probes on host Pi **1.2.0**; the scoped package check uses root-tooling Pi **0.99.2**. These checks do not accept a newer worker image or promise future host compatibility. Unit/integration tests, local Git/subprocess checks and image builds are not model/AX E2E.
 
 ## License
 

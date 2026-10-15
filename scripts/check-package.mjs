@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { spawnSync } from 'node:child_process';
-import { mkdtemp, mkdir, readFile, rm, symlink } from 'node:fs/promises';
+import { mkdtemp, mkdir, readFile, rename, rm, symlink } from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
 const root = process.cwd();
@@ -13,20 +13,26 @@ function run(command, args, options = {}) {
 }
 try {
   const [packed] = JSON.parse(run('npm', ['pack', '--json', '--ignore-scripts', '--pack-destination', temporary]));
+  assert.equal(packed.name, '@rothcold/pi-ax');
+  assert.equal(packed.version, '0.1.0');
+  assert.equal(packed.filename, 'rothcold-pi-ax-0.1.0.tgz');
   const names = new Set(packed.files.map((file) => file.path));
   for (const required of ['LICENSE', 'ax-config.example.json', 'src/credentials.ts', 'src/extension.ts', 'src/ax/protocol.ts', 'proto/ax/v1alpha1/ax.proto', 'proto/ateenv/v1alpha/guest.proto', 'proto/LICENSE', 'proto/PROVENANCE.md', 'proto/ateapi/ateapi.proto', 'worker/PROVENANCE.md', 'worker/run.ts', 'worker/supervise.c', 'scripts/build-worker.mjs', 'worker/Dockerfile', 'worker/package.json', 'scripts/build-image.mjs', 'npm-shrinkwrap.json', '.dockerignore', 'scripts/local-ax.sh']) assert(names.has(required), `Missing package asset: ${required}`);
   for (const lock of ['worker/npm-shrinkwrap.json', 'worker/package-lock.json']) assert(!names.has(lock), `Obsolete worker lock in package: ${lock}`);
   for (const name of names) assert(!/(^|\/)(node_modules|\.cache|\.git|\.env(?:\.[^/]*)?|ax-config\.json)(\/|$)/.test(name), `Private/build artifact in package: ${name}`);
   run('tar', ['-xzf', path.join(temporary, packed.filename), '-C', temporary]);
-  const extracted = path.join(temporary, 'package');
+  const extracted = path.join(temporary, 'node_modules', '@rothcold', 'pi-ax');
+  await mkdir(path.dirname(extracted), { recursive: true });
+  await rename(path.join(temporary, 'package'), extracted);
   // Reuse already lock-verified dependencies; package source/protos come only from the tarball.
   await symlink(path.join(root, 'node_modules'), path.join(extracted, 'node_modules'), 'dir');
   await mkdir(path.join(temporary, 'home')); await mkdir(path.join(temporary, 'cwd'));
   const cleanEnv = { PATH: '/usr/bin:/bin', HOME: path.join(temporary, 'home'), PI_CODING_AGENT_DIR: path.join(temporary, 'home', 'agent'), PI_OFFLINE: '1', PI_TELEMETRY: 'off' };
   const manifest = JSON.parse(await readFile(path.join(extracted, 'package.json'), 'utf8'));
-  assert.equal(manifest.name, 'pi-ax');
+  assert.equal(manifest.name, '@rothcold/pi-ax');
   assert.equal(manifest.version, '0.1.0');
   assert.equal(manifest.private, undefined);
+  assert.deepEqual(manifest.publishConfig, { access: 'public' });
   assert.equal(manifest.license, 'MIT');
   assert.equal(typeof manifest.description, 'string');
   assert(manifest.description.trim().length > 0);
@@ -38,6 +44,8 @@ try {
   assert.deepEqual(manifest.peerDependencies, { '@earendil-works/pi-coding-agent': '*', typebox: '*' });
   for (const peer of Object.keys(manifest.peerDependencies)) assert(!(peer in manifest.dependencies), `Bundled host peer: ${peer}`);
   const lock = JSON.parse(await readFile(path.join(extracted, 'npm-shrinkwrap.json'), 'utf8'));
+  assert.equal(lock.name, manifest.name);
+  assert.equal(lock.version, manifest.version);
   for (const key of ['name', 'version', 'license', 'dependencies', 'devDependencies', 'peerDependencies', 'engines']) assert.deepEqual(lock.packages[''][key], manifest[key], `Root shrinkwrap mismatch: ${key}`);
   assert.match(await readFile(path.join(extracted, 'LICENSE'), 'utf8'), /^MIT License\n/);
   assert.match(await readFile(path.join(extracted, 'proto/LICENSE'), 'utf8'), /Apache License\s+Version 2\.0/);
