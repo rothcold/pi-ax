@@ -1,0 +1,16 @@
+{
+  "controlAddress": "127.0.0.1:18080",
+  "routerAddress": "127.0.0.1:18081",
+  "atespace": "ax-system",
+  "workerImage": "registry.example.invalid/pi-ax-worker@sha256:REPLACE_WITH_VERIFIED_DIGEST",
+  "workerProvider": "your-provider",
+  "workerModel": "your-exact-supported-model-id",
+  "credentialEnv": ["YOUR_PROVIDER_API_KEY"],
+  "egress": {
+    "address": "127.0.0.1:18443",
+    "serverName": "api.ate-system.svc",
+    "caFile": "/absolute/path/to/substrate-ca.pem",
+    "bearerTokenFile": "/absolute/path/to/substrate-token",
+    "cidrs": ["192.0.2.1/32"]
+  }
+}

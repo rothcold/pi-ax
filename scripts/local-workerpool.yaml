@@ -1,0 +1,26 @@
+# Adapted from pinned Substrate demos/counter/counter.yaml.tmpl.
+# Copyright 2026 Google LLC. Apache-2.0; see proto/LICENSE.
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: ax-system
+---
+apiVersion: ate.dev/v1alpha1
+kind: WorkerPool
+metadata:
+  name: pi-ax-workers
+  namespace: ax-system
+spec:
+  # The golden actor needs spare capacity alongside the actual task actor.
+  replicas: 2
+  workerImage: WORKER_IMAGE
+  template:
+    nodeSelector:
+      ate.dev/substrate-version: "SUBSTRATE_VERSION"
+    resources:
+      limits:
+        cpu: "4"
+        memory: 8Gi
+      requests:
+        cpu: 250m
+        memory: 4Gi

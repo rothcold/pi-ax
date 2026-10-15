@@ -1,0 +1,10 @@
+node_modules/
+dist/
+coverage/
+.cache/
+*.tgz
+.pi-ax/
+.env
+.env.*
+*.log
+/ax-config.json
