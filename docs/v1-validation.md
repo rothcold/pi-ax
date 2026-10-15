@@ -4,6 +4,20 @@ Current status, 2026-10-15 UTC: one real Pi-on-AX SQLite CRUD run passed, includ
 
 Historical entries below describe their own phase, including earlier pending gates and failures. Their legacy environment assignments no longer configure the extension or E2E harness. Follow [current configuration](../README.md) for new runs. No historical failure or unrun recovery case is converted into a pass by the new result.
 
+## Scoped npm release preparation, 2026-10-15
+
+The attempted unscoped `pi-ax@0.1.0` publication was rejected by npm for similarity to `piax`; it was not published. The owner approved the npm-suggested `@rothcold/pi-ax` name. Version remains **0.1.0**, with `publishConfig.access: "public"`. Publication remains a separate owner action; this preparation does not claim a registry release. Old tarballs/evidence remain historical, not renamed or overwritten.
+
+Only the root package identity, shrinkwrap root metadata, consumer instructions and package assertions changed. Repository/tool names, configuration/state paths, internal worker project/image/protocol identities, MIT/third-party provenance, wildcard host peers and exact dependency pins remain unchanged. npm pack produces `rothcold-pi-ax-0.1.0.tgz`; personal Pi installs place its example at `~/.pi/agent/npm/node_modules/@rothcold/pi-ax/ax-config.example.json`.
+
+- `npm ci --ignore-scripts --no-audit --no-fund`: passed with isolated HOME/agent/npm config/cache, Node **24.13.0**, npm **11.6.2**. An initial system-toolchain attempt failed before installation; selecting the existing Node/npm tooling resolved it without changing dependencies.
+- `npm run check`: lint/typecheck and **123/123 tests passed**, no failures/skips/cancellations. Actual detached-Pi-bash tests still use root-tooling Pi **0.99.2**.
+- `npm run build:worker`: passed wrapper/native-supervisor compilation; no image rebuild.
+- `npm run check:package`: passed **249 assets**, scoped identity/filename/public-access and shrinkwrap assertions, licenses/provenance, runtime-config exclusion and actual five-tool/schema loader checks from a scoped extraction path. This check reuses lock-verified dependencies; it is not the fresh install below.
+- A separate fresh npm consumer installed the **local scoped tarball** and exact host Pi **1.2.0**, with peer auto-installation and lifecycle scripts disabled, no repository dependency symlinks. The actual installed `node_modules/@rothcold/pi-ax/scripts/pi-load-probe.mjs` registered all five tools and checked valid/invalid egress and persisted-config schemas. No model/session was started.
+
+These are host/package-only checks, not registry-install, worker-image, AX/guest or new SQLite acceptance. The inherited root development-dependency advisory is unchanged; no dependency upgrade or audit fix was authorized. Existing runtime evidence below retains its original image/configuration scope.
+
 ## Real SQLite acceptance and capacity recovery, 2026-10-15
 
 Independent source reviews accepted the directory durability, native scope binding and global Worker reference corrections. Source checks passed lint/typecheck, 117/117 tests, worker build and the 248-asset actual Pi-loader package check. The parent separately checked the five Worker-reference correction file hashes. These local checks are distinct from the following real run.

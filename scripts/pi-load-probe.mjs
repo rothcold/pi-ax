@@ -12,7 +12,7 @@ assert.deepEqual(loaded.errors, []);
 assert.equal(loaded.extensions.length, 1);
 assert.deepEqual([...loaded.extensions[0].tools.keys()].sort(), ['ax_cancel', 'ax_destroy', 'ax_result', 'ax_spawn', 'ax_status']);
 // Jiti must have located the vendored protobufs relative to the extracted package.
-assert.equal((await import(pathToFileURL(path.join(root, 'package.json')), { with: { type: 'json' } })).default.name, 'pi-ax');
+assert.equal((await import(pathToFileURL(path.join(root, 'package.json')), { with: { type: 'json' } })).default.name, '@rothcold/pi-ax');
 // Exercise the same Jiti aliases, not a separate Node import of root TypeBox.
 const probe = path.join(root, '.egress-schema-probe.ts');
 await writeFile(probe, `
